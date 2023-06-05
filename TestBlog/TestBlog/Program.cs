@@ -3,6 +3,9 @@ using TestBlog.Data;
 using Microsoft.AspNetCore.Identity;
 using TestBlog.Models;
 using TestBlog.Utilites;
+using Microsoft.Extensions.FileSystemGlobbing.Internal;
+using AspNetCoreHero.ToastNotification;
+using AspNetCoreHero.ToastNotification.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,6 +20,13 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
 
 builder.Services.AddScoped<IDbInitializer, DbInitializer>();
 
+builder.Services.AddNotyf(config => { config.DurationInSeconds = 10; config.IsDismissable = true; config.Position = NotyfPosition.BottomRight; });
+
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.LoginPath = "/login";
+});
+
 var app = builder.Build();
 DataSeeding();
 
@@ -26,12 +36,20 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+app.UseNotyf();
+
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseAuthentication();
+
 app.UseAuthorization();
+
+app.MapControllerRoute(
+    name: "area",
+    pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
 
 app.MapControllerRoute(
     name: "default",
